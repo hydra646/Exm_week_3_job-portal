@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %}Employer Dashboard{% endblock %}
+
+{% block content %}
+    <h2>Employer Dashboard</h2>
+    <p><a href="{% url 'post_job' %}" class="btn">Post New Job</a></p>
+
+    <h3>Your Posted Jobs</h3>
+    {% if jobs %}
+        <ul>
+            {% for job in jobs %}
+                <div class="job-card">
+                    <h3>{{ job.title }}</h3>
+                    <p>Company: {{ job.company_name }}</p>
+                    <p>Location: {{ job.location }}</p>
+                    <p>Posted: {{ job.created_at|date:"M d, Y" }}</p>
+                    <p><a href="{% url 'job_applicants' job.id %}" class="btn">View Applicants ({{ job.applications.count }})</a></p>
+                    {# Optional: Add edit/delete links later if desired #}
+                </div>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>You haven't posted any jobs yet.</p>
+        <p>Click "Post New Job" to get started!</p>
+    {% endif %}
+{% endblock %}

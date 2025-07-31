@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block title %}Apply for {{ job.title }}{% endblock %}
+
+{% block content %}
+    <h2>Apply for "{{ job.title }}"</h2>
+    <form method="post" enctype="multipart/form-data"> {# enctype="multipart/form-data" is CRUCIAL for file uploads #}
+        {% csrf_token %}
+        {% for field in form %}
+            <div class="form-group">
+                {{ field.label_tag }}
+                {{ field }}
+                {% for error in field.errors %}
+                    <p style="color: red; font-size: 0.9em;">{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endfor %}
+        <button type="submit" class="btn">Submit Application</button>
+    </form>
+    <p><a href="{% url 'job_detail' job.id %}" class="btn" style="background-color: #6c757d;">Cancel</a></p>
+{% endblock %}

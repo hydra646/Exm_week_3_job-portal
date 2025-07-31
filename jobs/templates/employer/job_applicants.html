@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %}Applicants for {{ job.title }}{% endblock %}
+
+{% block content %}
+    <h2>Applicants for "{{ job.title }}"</h2>
+    <p>Company: {{ job.company_name }} | Location: {{ job.location }}</p>
+    <p>Job Description: {{ job.description|truncatechars:200 }}</p>
+
+    <h3>Total Applicants: {{ applications.count }}</h3>
+    {% if applications %}
+        <ul>
+            {% for application in applications %}
+                <div class="job-card">
+                    <h4>Applicant: {{ application.applicant.username }}</h4>
+                    <p>Applied On: {{ application.applied_at|date:"M d, Y H:i" }}</p>
+                    <p>Resume: <a href="{{ application.resume.url }}" target="_blank" class="btn">Download Resume</a></p>
+                    <p>Cover Letter:</p>
+                    <p>{{ application.cover_letter }}</p>
+                </div>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No applicants for this job yet.</p>
+    {% endif %}
+    <p><a href="{% url 'employer_dashboard' %}" class="btn" style="background-color: #6c757d;">Back to Dashboard</a></p>
+{% endblock %}

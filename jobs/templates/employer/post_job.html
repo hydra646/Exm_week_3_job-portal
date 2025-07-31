@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block title %}Post New Job{% endblock %}
+
+{% block content %}
+    <h2>Post New Job</h2>
+    <form method="post">
+        {% csrf_token %}
+        {% for field in form %}
+            <div class="form-group">
+                {{ field.label_tag }}
+                {{ field }}
+                {% for error in field.errors %}
+                    <p style="color: red; font-size: 0.9em;">{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endfor %}
+        <button type="submit" class="btn">Post Job</button>
+    </form>
+{% endblock %}
