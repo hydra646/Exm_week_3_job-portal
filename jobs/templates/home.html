@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block title %}Welcome to Job Portal{% endblock %}
+
+{% block content %}
+    <h1>Welcome to the Job Portal!</h1>
+    <p>Find your dream job or the perfect candidate.</p>
+    {% if not user.is_authenticated %}
+        <p>Please <a href="{% url 'login' %}">Login</a> or <a href="{% url 'register' %}">Register</a> to get started.</p>
+    {% else %}
+        <p>Go to your <a href="{% url 'dashboard' %}">Dashboard</a>.</p>
+    {% endif %}
+{% endblock %}
