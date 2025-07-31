@@ -1,0 +1,222 @@
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse, HttpResponseForbidden
+from django.db.models import Q
+from .forms import RegisterForm, LoginForm, JobPostForm, ApplicationForm
+from .models import User, Job, Application
+
+#  General Views 
+
+def home(request):
+    """
+    Renders the homepage.
+    """
+    return render(request, 'jobs/home.html')
+
+def user_login(request):
+    """
+    Handles user login, redirecting based on role.
+    """
+    if request.user.is_authenticated:
+        return redirect('home')
+
+    if request.method == 'POST':
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data['username']
+            password = form.cleaned_data['password']
+            user = authenticate(request, username=username, password=password)
+            if user is not None:
+                login(request, user)
+                if user.role == 'applicant':
+                    return redirect('applicant_dashboard')
+                elif user.role == 'employer':
+                    return redirect('employer_dashboard')
+            else:
+                form.add_error(None, "Invalid username or password.")
+    else:
+        form = LoginForm()
+    return render(request, 'jobs/login.html', {'form': form})
+
+def register(request):
+    """
+    Handles user registration.
+    """
+    if request.method == 'POST':
+        form = RegisterForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('login')
+    else:
+        form = RegisterForm()
+    return render(request, 'jobs/register.html', {'form': form})
+
+@login_required
+def user_logout(request):
+    """
+    Logs the user out.
+    """
+    logout(request)
+    return redirect('home')
+
+#  Applicant Views 
+
+def job_list(request):
+    """
+    Displays a list of all jobs with search functionality.
+    """
+    query = request.GET.get('q')
+    if query:
+        jobs = Job.objects.filter(
+            Q(title__icontains=query) | 
+            Q(company_name__icontains=query) | 
+            Q(location__icontains=query)
+        ).order_by('-created_at')
+    else:
+        jobs = Job.objects.all().order_by('-created_at')
+    return render(request, 'jobs/job_list.html', {'jobs': jobs, 'query': query})
+
+def job_detail(request, job_id):
+    """
+    Displays details for a specific job.
+    """
+    job = get_object_or_404(Job, pk=job_id)
+    return render(request, 'jobs/job_detail.html', {'job': job})
+
+@login_required
+def apply_for_job(request, job_id):
+    """
+    Allows a logged-in applicant to apply for a job.
+    """
+    job = get_object_or_404(Job, pk=job_id)
+
+    # Check if the user is an applicant
+    if request.user.role != 'applicant':
+        return HttpResponseForbidden("You must be an applicant to apply for a job.")
+
+    # Check if the user has already applied
+    if Application.objects.filter(job=job, applicant=request.user).exists():
+        return render(request, 'jobs/already_applied.html', {'job': job})
+
+    if request.method == 'POST':
+        form = ApplicationForm(request.POST, request.FILES)
+        if form.is_valid():
+            application = form.save(commit=False)
+            application.job = job
+            application.applicant = request.user
+            application.save()
+            return redirect('applicant_dashboard')
+    else:
+        form = ApplicationForm()
+    
+    return render(request, 'jobs/apply.html', {'job': job, 'form': form})
+
+@login_required
+def applicant_dashboard(request):
+    """
+    Displays the applicant's dashboard, showing their applications.
+    This view now supports filtering by status.
+    """
+    if request.user.role != 'applicant':
+        return HttpResponseForbidden("You must be an applicant to view this page.")
+
+    # Get the status filter from the URL, defaulting to all statuses
+    status_filter = request.GET.get('status')
+    
+    applications = Application.objects.filter(applicant=request.user).order_by('-applied_at')
+    
+    if status_filter in dict(Application.STATUS_CHOICES):
+        applications = applications.filter(status=status_filter)
+
+    return render(request, 'jobs/applicant_dashboard.html', {'applications': applications})
+
+# Employer Views 
+
+@login_required
+def employer_dashboard(request):
+    """
+    Displays the employer's dashboard, showing their posted jobs.
+    """
+    if request.user.role != 'employer':
+        return HttpResponseForbidden("You must be an employer to view this page.")
+
+    jobs = Job.objects.filter(posted_by=request.user).order_by('-created_at')
+    return render(request, 'jobs/employer_dashboard.html', {'jobs': jobs})
+
+@login_required
+def post_job(request):
+    """
+    Allows a logged-in employer to post a new job.
+    """
+    if request.user.role != 'employer':
+        return HttpResponseForbidden("You must be an employer to post a job.")
+
+    if request.method == 'POST':
+        form = JobPostForm(request.POST)
+        if form.is_valid():
+            job = form.save(commit=False)
+            job.posted_by = request.user
+            job.save()
+            return redirect('employer_dashboard')
+    else:
+        form = JobPostForm()
+    return render(request, 'jobs/post_job.html', {'form': form})
+
+@login_required
+def employer_job_detail(request, job_id):
+    """
+    Displays details for a job posted by the employer.
+    """
+    job = get_object_or_404(Job, pk=job_id, posted_by=request.user)
+    return render(request, 'jobs/employer_job_detail.html', {'job': job})
+
+
+#  New Views for Application Management 
+
+@login_required
+def employer_application_list(request, job_id):
+    """
+    Displays all applications for a specific job posted by the logged-in employer.
+    """
+    # Get the job object, ensuring it belongs to the current employer
+    job = get_object_or_404(Job, pk=job_id, posted_by=request.user)
+    
+    # Check if the user is an employer
+    if request.user.role != 'employer':
+        return HttpResponseForbidden("You must be an employer to view applications.")
+
+    # Fetch all applications for that job
+    applications = job.applications.all().order_by('-applied_at')
+    
+    context = {
+        'job': job,
+        'applications': applications
+    }
+    return render(request, 'jobs/employer_application_list.html', context)
+
+
+@login_required
+def update_application_status(request, application_id):
+    """
+    Handles POST requests to update the status of an application.
+    """
+    if request.user.role != 'employer':
+        return HttpResponseForbidden("You must be an employer to update an application status.")
+
+    if request.method == 'POST':
+        application = get_object_or_404(Application, pk=application_id)
+        
+        # Security check: Ensure the employer owns the job associated with the application
+        if application.job.posted_by != request.user:
+            return HttpResponseForbidden("You do not have permission to update this application.")
+
+        new_status = request.POST.get('status')
+        if new_status in [Application.APPROVED, Application.REJECTED]:
+            application.status = new_status
+            application.save()
+        
+        # Redirect back to the application list for the same job
+        return redirect('employer_application_list', job_id=application.job.id)
+        
+    return HttpResponseForbidden("Invalid request.")
