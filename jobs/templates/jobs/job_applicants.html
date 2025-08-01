@@ -1,0 +1,44 @@
+{% extends 'jobs/base.html' %}
+
+{% block title %}Applicants for {{ job.title }}{% endblock %}
+
+{% block content %}
+    <h2>Applicants for "{{ job.title }}" at {{ job.company_name }}</h2>
+    {% if applications %}
+        <ul>
+            {% for application in applications %}
+                <li class="job-card">
+                    <h4>Applicant: {{ application.applicant.username }}</h4>
+                    <p>Applied On: {{ application.applied_at|date:"F d, Y" }}</p>
+                    <p>Cover Letter: <br>{{ application.cover_letter }}</p>
+                    {% if application.resume %}
+                        <p><a href="{{ application.resume.url }}" target="_blank" class="btn">Download Resume</a></p>
+                    {% else %}
+                        <p>No resume uploaded.</p>
+                    {% endif %}
+                    <p>
+                        Current Status: <span class="status-{{ application.status|lower }}">{{ application.status }}</span>
+                    </p>
+
+                    {% if application.status == 'Pending' %}
+                        <form action="{% url 'update_application_status' application.id %}" method="post" style="display: inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="new_status" value="Approved">
+                            <button type="submit" class="btn btn-primary">Approve</button>
+                        </form>
+                        <form action="{% url 'update_application_status' application.id %}" method="post" style="display: inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="new_status" value="Rejected">
+                            <button type="submit" class="btn btn-danger">Reject</button>
+                        </form>
+                    {% else %}
+                        <p>Status already updated.</p>
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No applicants for this job yet.</p>
+    {% endif %}
+    <p><a href="{% url 'employer_dashboard' %}" class="btn">Back to Dashboard</a></p>
+{% endblock %}

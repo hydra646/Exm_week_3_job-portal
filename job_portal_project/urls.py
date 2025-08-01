@@ -15,37 +15,33 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 # job_portal_project/urls.py
-from django.contrib import admin
-from django.urls import path, include # 'include' is needed to include app-specific URLs
+from django.urls import path
+from jobs import views as job_views
+from django.contrib.auth import views as auth_views
+from django.urls import path, include
 from django.conf import settings
-from django.conf.urls.static import static # To serve media files in development
-
-from jobs import views as job_views # Import your app's views
+from django.conf.urls.static import static
 
 urlpatterns = [
-    path('admin/', admin.site.urls), # Django Admin URL
-
-    # Authentication URLs
-    path('register/', job_views.register_view, name='register'),
-    path('login/', job_views.login_view, name='login'),
-    path('logout/', job_views.logout_view, name='logout'),
-    path('dashboard/', job_views.dashboard_view, name='dashboard'), # Role-based redirection
-    path('', job_views.home_view, name='home'), # Public home page
-
-    # Employer URLs
+    path('accounts/', include('django.contrib.auth.urls')),
+    path('register/applicant/', job_views.register_applicant, name='register_applicant'),
+    path('register/employer/', job_views.register_employer, name='register_employer'),
+    path('login/', auth_views.LoginView.as_view(template_name='jobs/login.html'), name='login'),
+     path('logout/', auth_views.LogoutView.as_view(next_page='home'), name='logout'),
+    path('register/', job_views.register, name='register'),
+    path('', job_views.home, name='home'),
     path('employer/dashboard/', job_views.employer_dashboard, name='employer_dashboard'),
-    path('employer/post-job/', job_views.post_job, name='post_job'),
-    path('employer/job/<int:job_id>/applicants/', job_views.job_applicants, name='job_applicants'),
+    path('applicant/dashboard/', job_views.applicant_dashboard, name='applicant_dashboard'),
 
-    # Applicant URLs
-    path('jobs/', job_views.job_list, name='job_list'), # List all jobs with search
-    path('jobs/<int:job_id>/', job_views.job_detail, name='job_detail'), # Specific job details
-    path('jobs/<int:job_id>/apply/', job_views.apply_job, name='apply_job'), # Apply to a job
-    path('applicant/dashboard/', job_views.applicant_dashboard, name='applicant_dashboard'), # Applicant's applications
+    # Employer Functionalities
+    path('jobs/post/', job_views.post_job, name='post_job'),
+    path('jobs/<int:job_id>/applicants/', job_views.job_applicants, name='job_applicants'),
+    path('applications/<int:application_id>/status/', job_views.update_application_status, name='update_application_status'),
+
+    # Applicant Functionalities
+    path('jobs/', job_views.job_list, name='job_list'),
+    path('jobs/<int:job_id>/', job_views.job_detail, name='job_detail'),
+    path('jobs/<int:job_id>/apply/', job_views.apply_for_job, name='apply_for_job'),
 ]
-
-# Serve media files during development.
-# IMPORTANT: This should ONLY be used in development.
-# In production, web servers (like Nginx, Apache) handle media files.
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

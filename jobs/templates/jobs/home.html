@@ -1,0 +1,23 @@
+<!-- filepath: d:\Django project\job_portal_app\jobs\templates\jobs\home.html -->
+{% extends 'jobs/base.html' %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+    <h2>Welcome to the Job Portal!</h2>
+    <p>A place where job seekers and employers connect.</p>
+
+    {% if user.is_authenticated %}
+        {% if user.groups.first.name == 'Applicant' %}
+            <p>You are logged in as an Applicant. <a href="{% url 'job_list' %}" class="btn">View all Jobs</a></p>
+            <p><a href="{% url 'applicant_dashboard' %}" class="btn">Go to your Dashboard</a></p>
+        {% elif user.groups.first.name == 'Employer' %}
+            <p>You are logged in as an Employer. <a href="{% url 'post_job' %}" class="btn">Post a Job</a></p>
+            <p><a href="{% url 'employer_dashboard' %}" class="btn">Go to your Dashboard</a></p>
+        {% else %}
+             <p>You are logged in. <a href="{% url 'logout' %}" class="btn">Log Out</a></p>
+        {% endif %}
+    {% else %}
+        <p><a href="{% url 'login' %}" class="btn">Log In</a> or <a href="{% url 'register' %}" class="btn">Register</a></p>
+    {% endif %}
+{% endblock %}

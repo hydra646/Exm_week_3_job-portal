@@ -127,5 +127,10 @@ AUTH_USER_MODEL = 'jobs.User'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-LOGIN_REDIRECT_URL = 'dashboard' # Redirect to named URL 'dashboard'
+ # Redirect to named URL 'dashboard'
 LOGOUT_REDIRECT_URL = 'home'     # Redirect to named URL 'home'
+# AUTH_USER_MODEL = 'jobs.User'
+AUTH_USER_MODEL = 'jobs.User'
+
+LOGIN_REDIRECT_URL = 'home'
+LOGIN_URL = 'login'

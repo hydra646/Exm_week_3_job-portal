@@ -1,0 +1,14 @@
+<!-- filepath: d:\Django project\job_portal_app\jobs\templates\jobs\login.html -->
+{% extends 'jobs/base.html' %}
+
+{% block title %}Log In{% endblock %}
+
+{% block content %}
+    <h2>Log In</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Log In</button>
+    </form>
+    <p>Don't have an account? <a href="{% url 'register_applicant' %}">Sign up as an Applicant</a> or <a href="{% url 'register_employer' %}">Sign up as an Employer</a>.</p>
+{% endblock %}

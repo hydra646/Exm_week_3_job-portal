@@ -1,0 +1,14 @@
+<!-- filepath: d:\Django project\job_portal_app\jobs\templates\jobs\register.html -->
+<!-- filepath: d:\Django project\job_portal_app\jobs\templates\jobs\register.html -->
+{% extends 'jobs/base.html' %}
+
+{% block title %}Register{% endblock %}
+
+{% block content %}
+    <h2>Register</h2>
+    <p>Please select your role to register:</p>
+    <ul>
+        <li><a href="{% url 'register_applicant' %}">I am an Applicant</a></li>
+        <li><a href="{% url 'register_employer' %}">I am an Employer</a></li>
+    </ul>
+{% endblock %}

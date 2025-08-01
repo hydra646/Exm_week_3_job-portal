@@ -3,43 +3,46 @@
 # Create your models here.
 # jobs/models.py
 from django.db import models
-from django.contrib.auth.models import AbstractUser # Import AbstractUser
+from django.contrib.auth.models import AbstractUser
+from django.conf import settings
 
-# 1. Custom User Model with Roles
 class User(AbstractUser):
     ROLE_CHOICES = (
-        ('employer', 'Employer'),
         ('applicant', 'Applicant'),
+        ('employer', 'Employer'),
     )
-    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='applicant')
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='applicant')
 
     def __str__(self):
-        return f"{self.username} ({self.role})"
+        return self.username
 
-# 2. Job Model
+APPLICATION_STATUS_CHOICES = (
+    ('Pending', 'Pending'),
+    ('Approved', 'Approved'),
+    ('Rejected', 'Rejected'),
+)
+
 class Job(models.Model):
-    title = models.CharField(max_length=200)
-    company_name = models.CharField(max_length=200)
-    location = models.CharField(max_length=200)
+    title = models.CharField(max_length=255)
+    company_name = models.CharField(max_length=255)
+    location = models.CharField(max_length=255)
     description = models.TextField()
     posted_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posted_jobs')
-    created_at = models.DateTimeField(auto_now_add=True) # Automatically sets on creation
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.title} at {self.company_name}"
 
-# 3. Application Model
 class Application(models.Model):
     job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name='applications')
-    applicant = models.ForeignKey(User, on_delete=models.CASCADE, related_name='applications')
-    resume = models.FileField(upload_to='resumes/') # Files uploaded to media/resumes/
+    applicant = models.ForeignKey(User, on_delete=models.CASCADE, related_name='applications_submitted')
+    resume = models.FileField(upload_to='resumes/')
     cover_letter = models.TextField()
-    applied_at = models.DateTimeField(auto_now_add=True) # Automatically sets on creation
+    applied_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=20, choices=APPLICATION_STATUS_CHOICES, default='Pending')
 
     class Meta:
-        # Ensures an applicant can only apply once to a specific job
         unique_together = ('job', 'applicant')
-        ordering = ['-applied_at'] # Order applications by most recent first
 
     def __str__(self):
         return f"Application for {self.job.title} by {self.applicant.username}"

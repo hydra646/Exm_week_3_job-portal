@@ -1,0 +1,35 @@
+<!-- filepath: d:\Django project\job_portal_app\jobs\templates\jobs\applicant_dashboard.html -->
+{% extends 'jobs/base.html' %}
+
+{% block title %}Applicant Dashboard{% endblock %}
+
+{% block content %}
+    <h2>Welcome to your Dashboard, {{ user.username }}!</h2>
+    <h3>Your Applications</h3>
+    <form method="get" class="mb-3">
+        <label for="status-filter">Filter by Status:</label>
+        <select name="status" id="status-filter" onchange="this.form.submit()">
+            <option value="">All</option>
+            {% for status_code, status_label in status_choices %}
+                <option value="{{ status_code }}" {% if selected_status == status_code %}selected{% endif %}>
+                    {{ status_label }}
+                </option>
+            {% endfor %}
+        </select>
+    </form>
+    
+    {% if applications %}
+        <ul>
+            {% for application in applications %}
+                <li class="job-card">
+                    <h4><a href="{% url 'job_detail' application.job.id %}">{{ application.job.title }}</a></h4>
+                    <p>Company: {{ application.job.company_name }}</p>
+                    <p>Status: <span class="status-{{ application.status|lower }}">{{ application.status }}</span></p>
+                    <p>Applied on: {{ application.applied_at|date:"F d, Y" }}</p>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>You have not applied for any jobs yet.</p>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,13 @@
+<!-- filepath: d:\Django project\job_portal_app\jobs\templates\jobs\register_applicant.html -->
+{% extends 'jobs/base.html' %}
+
+{% block title %}Register as Applicant{% endblock %}
+
+{% block content %}
+    <h2>Register as an Applicant</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Register</button>
+    </form>
+{% endblock %}
